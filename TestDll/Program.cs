@@ -7,6 +7,15 @@ namespace TestDll
     class Emit_Test
     {
         public static int AA = 10000;
+
+        public int BB { get; set; }
+
+        [IndexerName("It")]
+        public int this[int i]
+        {
+            get => i;
+            set => i = value;
+        }
     }
 
     class Emit_Test<T>
@@ -59,7 +68,15 @@ namespace TestDll
 
             var fi__ = Info.OfField<string>(nameof(string.Empty));
 
-            var fi__1 = Info.OfField<Emit_Test>(nameof(Emit_Test.AA));
+            var fi__1 = Info.OfField<Emit_Test>("AA");
+
+            Info.OfPropertyGet<Emit_Test>("BB");
+
+            Info.OfPropertySet<Emit_Test>("BB");
+
+            Info.OfIndexerGet<Emit_Test>("Int32", "It");
+
+            Info.OfIndexerSet<Emit_Test>("Int32", "It");
 
             var writeline = Info.OfMethod("mscorlib", "System.Console", "WriteLine", "String");
 
