@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFrameworks>net461;netstandard2.0</TargetFrameworks>
+		<Authors>cxl</Authors>
+		<Company />
+		<OutputType>Exe</OutputType>
+		<PackageProjectUrl>https://github.com/chen19890425/CryptStr2.Fody</PackageProjectUrl>
+		<Version>1.0.19</Version>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="FodyHelpers" Version="6.3.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\InfoOf2.Fody\InfoOf2.Fody.csproj" />
+	</ItemGroup>
+
+</Project>
