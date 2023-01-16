@@ -1,8 +1,9 @@
+using System.Collections.Generic;
 using Mono.Cecil.Cil;
 
 public partial class ModuleWeaver
 {
-    void HandleOfType(Instruction instruction, ILProcessor ilProcessor)
+    void HandleOfType(Instruction instruction, ILProcessor ilProcessor, Dictionary<Instruction, Instruction> offsetMaps)
     {
         //Info.OfType("AssemblyToProcess","TypeClass");
 
@@ -20,5 +21,7 @@ public partial class ModuleWeaver
         assemblyNameInstruction.Operand = typeReference;
 
         instruction.Operand = getTypeFromHandle;
+
+        offsetMaps[instruction] = instruction.Previous;
     }
 }

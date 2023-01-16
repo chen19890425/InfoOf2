@@ -12,6 +12,8 @@ public partial class ModuleWeaver
     void ProcessMethod(MethodDefinition method)
     {
         var actions = new List<Action<ILProcessor>>();
+        var offsetMaps = new Dictionary<Instruction, Instruction>();
+
         foreach (var instruction in method.Body.Instructions
             .Where(i => i.OpCode == OpCodes.Call))
         {
@@ -26,31 +28,32 @@ public partial class ModuleWeaver
             }
 
             var copy = instruction;
+
             switch (methodReference.Name)
             {
                 case "OfMethod":
-                    actions.Add(x => HandleOfMethod(copy, x, methodReference));
+                    actions.Add(x => HandleOfMethod(copy, x, offsetMaps, methodReference));
                     break;
                 case "OfField":
-                    actions.Add(x => HandleOfField(copy, x, methodReference));
+                    actions.Add(x => HandleOfField(copy, x, offsetMaps, methodReference));
                     break;
                 case "OfType":
-                    actions.Add(x => HandleOfType(copy, x));
+                    actions.Add(x => HandleOfType(copy, x, offsetMaps));
                     break;
                 case "OfPropertyGet":
-                    actions.Add(x => HandleOfPropertyGet(copy, x, methodReference));
+                    actions.Add(x => HandleOfPropertyGet(copy, x, offsetMaps, methodReference));
                     break;
                 case "OfPropertySet":
-                    actions.Add(x => HandleOfPropertySet(copy, x, methodReference));
+                    actions.Add(x => HandleOfPropertySet(copy, x, offsetMaps, methodReference));
                     break;
                 case "OfConstructor":
-                    actions.Add(x => HandleOfConstructor(copy, x, methodReference));
+                    actions.Add(x => HandleOfConstructor(copy, x, offsetMaps, methodReference));
                     break;
                 case "OfIndexerGet":
-                    actions.Add(x => HandleOfIndexerGet(copy, x, methodReference));
+                    actions.Add(x => HandleOfIndexerGet(copy, x, offsetMaps, methodReference));
                     break;
                 case "OfIndexerSet":
-                    actions.Add(x => HandleOfIndexerSet(copy, x, methodReference));
+                    actions.Add(x => HandleOfIndexerSet(copy, x, offsetMaps, methodReference));
                     break;
             }
         }
@@ -73,7 +76,7 @@ public partial class ModuleWeaver
 
         method.Body.OptimizeMacros();
 
-        method.UpdateDebugInfo(sequencePoints);
+        method.UpdateDebugInfo(sequencePoints, offsetMaps);
     }
 
     TypeReference GetTypeReference(string assemblyName, string typeName)

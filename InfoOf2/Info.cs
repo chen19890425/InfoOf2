@@ -134,7 +134,7 @@ public static class Info
     /// <summary>
     /// Inject a MethodOf for an indexer get.
     /// </summary>
-    public static MethodInfo OfIndexerGet(string assemblyName, string typeName, string parameters)
+    public static MethodInfo OfIndexerGet(string assemblyName, string typeName, string parameters, string indexerName = "Item")
     {
         throw BuildException();
     }
@@ -142,7 +142,7 @@ public static class Info
     /// <summary>
     /// Inject a MethodOf for an indexer get.
     /// </summary>
-    public static MethodInfo OfIndexerGet<T>(string parameters)
+    public static MethodInfo OfIndexerGet<T>(string parameters, string indexerName = "Item")
     {
         throw BuildException();
     }
@@ -150,7 +150,7 @@ public static class Info
     /// <summary>
     /// Inject a MethodOf for an indexer set.
     /// </summary>
-    public static MethodInfo OfIndexerSet(string assemblyName, string typeName, string parameters)
+    public static MethodInfo OfIndexerSet(string assemblyName, string typeName, string parameters, string indexerName = "Item")
     {
         throw BuildException();
     }
@@ -158,7 +158,7 @@ public static class Info
     /// <summary>
     /// Inject a MethodOf for an indexer set.
     /// </summary>
-    public static MethodInfo OfIndexerSet<T>(string parameters)
+    public static MethodInfo OfIndexerSet<T>(string parameters, string indexerName = "Item")
     {
         throw BuildException();
     }

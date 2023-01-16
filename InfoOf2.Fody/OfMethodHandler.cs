@@ -6,7 +6,7 @@ using Mono.Cecil.Cil;
 
 public partial class ModuleWeaver
 {
-    void HandleOfMethod(Instruction instruction, ILProcessor ilProcessor, MethodReference ofMethodReference)
+    void HandleOfMethod(Instruction instruction, ILProcessor ilProcessor, Dictionary<Instruction, Instruction> offsetMaps, MethodReference ofMethodReference)
     {
         //Info.OfMethod("AssemblyToProcess","MethodClass","InstanceMethod");
 
@@ -60,10 +60,14 @@ public partial class ModuleWeaver
         {
             ilProcessor.InsertBefore(instruction, Instruction.Create(OpCodes.Ldtoken, typeReferenceData.TypeReference));
             instruction.Operand = getMethodFromHandleGeneric;
+
+            offsetMaps[instruction] = instruction.Previous.Previous;
         }
         else
         {
             instruction.Operand = getMethodFromHandle;
+
+            offsetMaps[instruction] = instruction.Previous;
         }
 
         ilProcessor.InsertAfter(instruction, Instruction.Create(OpCodes.Castclass, methodInfoType));

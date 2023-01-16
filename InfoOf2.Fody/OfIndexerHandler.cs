@@ -7,26 +7,29 @@ using Mono.Cecil.Cil;
 
 public partial class ModuleWeaver
 {
-    void HandleOfIndexerGet(Instruction instruction, ILProcessor ilProcessor, MethodReference ofIndexerGetReference)
+    void HandleOfIndexerGet(Instruction instruction, ILProcessor ilProcessor, Dictionary<Instruction, Instruction> offsetMaps, MethodReference ofIndexerGetReference)
     {
-        HandleOfIndexer(instruction, ilProcessor, ofIndexerGetReference, x => x.GetMethod, (_, p) => p);
+        HandleOfIndexer(instruction, ilProcessor, offsetMaps, ofIndexerGetReference, x => x.GetMethod, (_, p) => p);
     }
 
-    void HandleOfIndexerSet(Instruction instruction, ILProcessor ilProcessor, MethodReference ofIndexerSetReference)
+    void HandleOfIndexerSet(Instruction instruction, ILProcessor ilProcessor, Dictionary<Instruction, Instruction> offsetMaps, MethodReference ofIndexerSetReference)
     {
-        HandleOfIndexer(instruction, ilProcessor, ofIndexerSetReference, x => x.SetMethod, (d, p) => p.Append(d.PropertyType.Name).ToList());
+        HandleOfIndexer(instruction, ilProcessor, offsetMaps, ofIndexerSetReference, x => x.SetMethod, (d, p) => p.Append(d.PropertyType.Name).ToList());
     }
 
-    void HandleOfIndexer(Instruction instruction, ILProcessor ilProcessor, MethodReference propertyReference,
+    void HandleOfIndexer(
+        Instruction instruction, ILProcessor ilProcessor,
+        Dictionary<Instruction, Instruction> offsetMaps, MethodReference propertyReference,
         Func<PropertyDefinition, MethodDefinition> func, Func<PropertyDefinition, List<string>, List<string>> getParameters)
     {
-        var parametersInstruction = instruction.Previous;
+        var indexerNameInstruction = instruction.Previous;
+        var parametersInstruction = indexerNameInstruction.Previous;
         var parameters = GetLdString(parametersInstruction)
             .Split(new[] { "," }, StringSplitOptions.RemoveEmptyEntries)
             .Select(x => x.Trim())
             .ToList();
 
-        const string propertyName = "Item";
+        var propertyName = indexerNameInstruction.Operand as string ?? "Item";
 
         var typeReferenceData = LoadTypeReference(propertyReference, ilProcessor, parametersInstruction.Previous);
         var typeDefinition = typeReferenceData.TypeReference.Resolve();
@@ -38,25 +41,44 @@ public partial class ModuleWeaver
         {
             throw new WeavingException("Could not find indexer.");
         }
+
         var methodDefinition = func(property);
+
         if (methodDefinition == null)
         {
             throw new WeavingException("Could not find indexer.");
         }
 
-        var methodReference = ModuleDefinition.ImportReference(methodDefinition);
+        ilProcessor.Remove(parametersInstruction);
 
-        parametersInstruction.OpCode = OpCodes.Ldtoken;
-        parametersInstruction.Operand = methodReference;
+        MethodReference methodReference;
+
+        if (typeDefinition.HasGenericParameters)
+        {
+            var typeReference = typeReferenceData.TypeReference as GenericInstanceType;
+
+            methodReference = ModuleDefinition.ImportGenericMethodInstance(methodDefinition, typeReference.GenericArguments.ToArray());
+        }
+        else
+        {
+            methodReference = ModuleDefinition.ImportReference(methodDefinition);
+        }
+
+        indexerNameInstruction.OpCode = OpCodes.Ldtoken;
+        indexerNameInstruction.Operand = methodReference;
 
         if (typeDefinition.HasGenericParameters)
         {
             ilProcessor.InsertBefore(instruction, Instruction.Create(OpCodes.Ldtoken, typeReferenceData.TypeReference));
             instruction.Operand = getMethodFromHandleGeneric;
+
+            offsetMaps[instruction] = instruction.Previous.Previous;
         }
         else
         {
             instruction.Operand = getMethodFromHandle;
+
+            offsetMaps[instruction] = instruction.Previous;
         }
 
         ilProcessor.InsertAfter(instruction, Instruction.Create(OpCodes.Castclass, methodInfoType));

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace TestDll
 {
@@ -8,11 +9,35 @@ namespace TestDll
         public static int AA = 10000;
     }
 
+    class Emit_Test<T>
+    {
+        public int AA = 10000;
+
+        public int BB { get; set; }
+
+        [IndexerName("It")]
+        public int this[int i]
+        {
+            get => i;
+            set => i = value;
+        }
+    }
+
     public class Program
     {
         public static void Main()
         {
             Info.OfConstructor<object>();
+
+            Info.OfField<Emit_Test<string>>("AA");
+
+            Info.OfPropertyGet<Emit_Test<string>>("BB");
+
+            Info.OfPropertySet<Emit_Test<string>>("BB");
+
+            Info.OfIndexerGet<Emit_Test<string>>("Int32", "It");
+
+            Info.OfIndexerSet<Emit_Test<string>>("Int32", "It");
 
             var m = Info.OfMethod<Action<string>>(nameof(Action<string>.Invoke));
 

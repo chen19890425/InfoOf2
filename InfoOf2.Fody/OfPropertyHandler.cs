@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Fody;
 using Mono.Cecil;
@@ -6,17 +7,17 @@ using Mono.Cecil.Cil;
 
 public partial class ModuleWeaver
 {
-    void HandleOfPropertyGet(Instruction instruction, ILProcessor ilProcessor, MethodReference ofPropertyGetReference)
+    void HandleOfPropertyGet(Instruction instruction, ILProcessor ilProcessor, Dictionary<Instruction, Instruction> offsetMaps, MethodReference ofPropertyGetReference)
     {
-        HandleOfProperty(instruction, ilProcessor, ofPropertyGetReference, x => x.GetMethod);
+        HandleOfProperty(instruction, ilProcessor, offsetMaps, ofPropertyGetReference, x => x.GetMethod);
     }
 
-    void HandleOfPropertySet(Instruction instruction, ILProcessor ilProcessor, MethodReference ofPropertySetReference)
+    void HandleOfPropertySet(Instruction instruction, ILProcessor ilProcessor, Dictionary<Instruction, Instruction> offsetMaps, MethodReference ofPropertySetReference)
     {
-        HandleOfProperty(instruction, ilProcessor, ofPropertySetReference, x => x.SetMethod);
+        HandleOfProperty(instruction, ilProcessor, offsetMaps, ofPropertySetReference, x => x.SetMethod);
     }
 
-    void HandleOfProperty(Instruction instruction, ILProcessor ilProcessor, MethodReference propertyReference, Func<PropertyDefinition, MethodDefinition> func)
+    void HandleOfProperty(Instruction instruction, ILProcessor ilProcessor, Dictionary<Instruction, Instruction> offsetMaps, MethodReference propertyReference, Func<PropertyDefinition, MethodDefinition> func)
     {
         var propertyNameInstruction = instruction.Previous;
         var propertyName = GetLdString(propertyNameInstruction);
@@ -30,13 +31,26 @@ public partial class ModuleWeaver
         {
             throw new WeavingException($"Could not find property named '{propertyName}'.");
         }
+
         var methodDefinition = func(property);
+
         if (methodDefinition == null)
         {
             throw new WeavingException($"Could not find property named '{propertyName}'.");
         }
 
-        var methodReference = ModuleDefinition.ImportReference(methodDefinition);
+        MethodReference methodReference;
+
+        if (typeDefinition.HasGenericParameters)
+        {
+            var typeReference = typeReferenceData.TypeReference as GenericInstanceType;
+
+            methodReference = ModuleDefinition.ImportGenericMethodInstance(methodDefinition, typeReference.GenericArguments.ToArray());
+        }
+        else
+        {
+            methodReference = ModuleDefinition.ImportReference(methodDefinition);
+        }
 
         propertyNameInstruction.OpCode = OpCodes.Ldtoken;
         propertyNameInstruction.Operand = methodReference;
@@ -45,10 +59,14 @@ public partial class ModuleWeaver
         {
             ilProcessor.InsertBefore(instruction, Instruction.Create(OpCodes.Ldtoken, typeReferenceData.TypeReference));
             instruction.Operand = getMethodFromHandleGeneric;
+
+            offsetMaps[instruction] = instruction.Previous.Previous;
         }
         else
         {
             instruction.Operand = getMethodFromHandle;
+
+            offsetMaps[instruction] = instruction.Previous;
         }
 
         ilProcessor.InsertAfter(instruction, Instruction.Create(OpCodes.Castclass, methodInfoType));
