@@ -11,9 +11,9 @@ public static class ParamChecker
         {
             var definitions = typeDefinition
                 .Methods
-                .Where(method => method.Name == methodName &&
-                                 method.HasSameParams(parameters))
+                .Where(method => method.Name == methodName && method.HasSameParams(parameters))
                 .ToList();
+
             if (definitions.Count == 0)
             {
                 throw new WeavingException($"Could not find method named '{methodName}'.");
@@ -23,6 +23,7 @@ public static class ParamChecker
             {
                 throw new WeavingException($"More than one method named '{methodName}' found.");
             }
+
             return definitions.First();
         }
         else
@@ -31,9 +32,15 @@ public static class ParamChecker
                 .Methods
                 .Where(method => method.Name == methodName)
                 .ToList();
+
             if (definitions.Count == 0)
             {
                 throw new WeavingException($"Could not find method named '{methodName}'.");
+            }
+
+            if (definitions.Count > 1)
+            {
+                throw new WeavingException($"More than one method named '{methodName}' found.");
             }
 
             return definitions.OrderBy(x => x.Parameters.Count).First();
@@ -46,16 +53,19 @@ public static class ParamChecker
         {
             return false;
         }
+
         for (var index = 0; index < method.Parameters.Count; index++)
         {
             var parameterDefinition = method.Parameters[index];
             var parameterType = parameterDefinition.ParameterType;
             var parameterName = parameters[index];
+
             if (!parameterType.IsNamed(parameterName))
             {
                 return false;
             }
         }
+
         return true;
     }
 }

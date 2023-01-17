@@ -100,6 +100,7 @@ public partial class ModuleWeaver
         else
         {
             var assemblyDefinition = ModuleDefinition.AssemblyResolver.Resolve(new AssemblyNameReference(assemblyName, null));
+
             if (assemblyDefinition == null)
             {
                 throw new WeavingException($"Could not find assembly named '{assemblyName}'.");
@@ -109,13 +110,14 @@ public partial class ModuleWeaver
         }
 
         var typeDefinition = moduleDefinition.GetTypes().FirstOrDefault(x => x.FullName == typeName);
+
         if (typeDefinition != null)
         {
             return MakeGeneric(typeDefinition);
         }
 
-        var exportedType = moduleDefinition.ExportedTypes
-            .FirstOrDefault(x => x.FullName == typeName)?.Resolve();
+        var exportedType = moduleDefinition.ExportedTypes.FirstOrDefault(x => x.FullName == typeName)?.Resolve();
+
         if (exportedType != null)
         {
             return MakeGeneric(exportedType);

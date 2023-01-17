@@ -6,6 +6,11 @@ namespace TestDll
 {
     class Emit_Test
     {
+        private class ClassAA
+        {
+
+        }
+
         public static int AA = 10000;
 
         public int BB { get; set; }
@@ -36,6 +41,14 @@ namespace TestDll
     {
         public static void Main()
         {
+            Info.OfType("TestDll", "TestDll.Emit_Test/ClassAA");
+
+            //Info.OfType("mscorlib", "System.Enum/EnumResult");
+
+            //Info.OfMethod<Enum>("TryParseEnum");
+
+            //Info.OfMethod<Enum>("TryParseEnum", "Type, String, Boolean, System.Enum/EnumResult&");
+
             Info.OfConstructor<object>();
 
             Info.OfField<Emit_Test<string>>("AA");

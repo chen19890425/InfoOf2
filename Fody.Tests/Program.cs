@@ -9,7 +9,7 @@ namespace Fody.Tests
         {
             var result = WeaverTestHelper.ExecuteTestRun(
                 new ModuleWeaver(),
-                Path.Combine(AppContext.BaseDirectory, "../../../../TestDll/bin", "TestDll.exe"),
+                Path.Combine(AppContext.BaseDirectory, "../../../../TestDll/bin/Debug/net48", "TestDll.exe"),
                 runPeVerify: false,
                 writeSymbols: false);
 
